@@ -12,6 +12,7 @@ interface Config {
     'db.name': string;
     'db.port': number;
     'db.user': string;
+    'db.host': string;
     'db.password': string;
     'privateKey': string;
     'mail.host': string;
@@ -26,6 +27,7 @@ const prodConfig: Config = {
     'db.name': process.env.DB_NAME!,
     'db.port': parseInt(process.env.DB_PORT!, 10),
     'db.user': process.env.DB_USER!,
+    'db.host': 'localhost', // TODO
     'db.password': process.env.DB_PASS!,
     'privateKey': process.env.PRIVATE_KEY!,
     'mail.host': 'smtp.yandex.ru',
@@ -37,7 +39,8 @@ const testConfig: Config = {
 };
 
 const devConfig: Config = {
-    ...prodConfig
+    ...prodConfig,
+    'db.host': process.env.DOCKER ? 'host.docker.internal' : 'localhost'
 };
 
 const ciConfig: Config = {
