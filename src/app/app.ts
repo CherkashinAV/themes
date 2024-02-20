@@ -3,6 +3,15 @@ import {pingMidleware, loggerMiddleware} from './middlewares';
 import {v1Router} from './routes/v1';
 import {env, config} from './config';
 import {logger} from './lib/logger';
+import {User} from './types';
+
+declare global {
+    namespace Express {
+        interface Request {
+            currentUser: User
+        }
+    }
+}
 
 export function createApp(): Application {
     const app: Application = express();

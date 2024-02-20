@@ -11,9 +11,9 @@ CREATE TABLE organizations (
 
 CREATE TABLE users (
 	id SERIAL PRIMARY KEY,
-	uid uuid NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+	uid uuid NOT NULL UNIQUE,
 	description text NOT NULL DEFAULT '',
-	organization integer NOT NULL REFERENCES organizations (id),
+	organization integer NOT NULL REFERENCES organizations (id) DEFAULT 1,
 	created_at timestamptz NOT NULL DEFAULT NOW(),
 	updated_at timestamptz NOT NULL DEFAULT NOW()
 );

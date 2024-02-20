@@ -14,9 +14,7 @@ interface Config {
     'db.user': string;
     'db.host': string;
     'db.password': string;
-    'privateKey': string;
-    'mail.host': string;
-    'mail.port': number;
+    'passport.baseUrl': string;
 }
 
 const prodConfig: Config = {
@@ -29,9 +27,7 @@ const prodConfig: Config = {
     'db.user': process.env.DB_USER!,
     'db.host': 'localhost', // TODO
     'db.password': process.env.DB_PASS!,
-    'privateKey': process.env.PRIVATE_KEY!,
-    'mail.host': 'smtp.yandex.ru',
-    'mail.port': 465
+    'passport.baseUrl': 'localHost' // TODO
 };
 
 const testConfig: Config = {
@@ -40,7 +36,8 @@ const testConfig: Config = {
 
 const devConfig: Config = {
     ...prodConfig,
-    'db.host': process.env.DOCKER ? 'host.docker.internal' : 'localhost'
+    'db.host': process.env.DOCKER ? 'host.docker.internal' : 'localhost',
+    'passport.baseUrl': process.env.DOCKER ? 'http://host.docker.internal:8083/v1/' : 'http://localhost:8083/v1/'
 };
 
 const ciConfig: Config = {

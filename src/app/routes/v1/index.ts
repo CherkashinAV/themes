@@ -1,10 +1,12 @@
 import {NextFunction, Request, Response, Router} from 'express';
-import bodyParser from 'body-parser';
 import {ApiError} from './api-error';
 import {logger} from '../../lib/logger';
+import {uiRouter} from './ui';
+import {passportMiddleware} from '../../middlewares/passport';
 
 export const v1Router: Router = Router()
-    .use(bodyParser.json())
+    .use(passportMiddleware)
+    .use('/ui', uiRouter)
     .use((error: Error, _req: Request, res: Response, next: NextFunction) => {
         if (error instanceof ApiError) {
             const errorBody = {
