@@ -36,7 +36,7 @@ CREATE TABLE themes (
 	title text NOT NULL,
 	short_description text NOT NULL DEFAULT '',
 	description text NOT NULL,
-	approver integer NOT NULL REFERENCES users (id),
+	approver integer REFERENCES users (id),
 	creator integer NOT NULL REFERENCES users (id),
 	private boolean NOT NULL DEFAULT true,
 	executors_group integer NOT NULL REFERENCES groups (id),

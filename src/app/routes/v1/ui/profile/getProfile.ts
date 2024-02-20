@@ -34,6 +34,7 @@ export const getProfileHandler = asyncMiddleware(async (req: Request, res: Respo
 
     res.status(200).json({
         ...userInfo,
-        ...userDetails
+        ...userDetails,
+        id: undefined
     });
 });

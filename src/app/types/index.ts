@@ -11,11 +11,12 @@ type ErrorResult<T = string> = {
 export type Result<T, E> = OkResult<T> | ErrorResult<E>;
 export type AsyncResult<T, E> = Promise<Result<T, E>>;
 
+export type Role = 'default' | 'mentor' | 'moderator';
 export type User = {
 	name: string;
 	surname: string;
 	email: string;
-	role: string;
+	role: Role;
 	uid: string;
 }
 
@@ -28,7 +29,35 @@ export type Organization = {
 	attributes: unknown;
 }
 
-export type userDetails = {
+export type UserDetails = {
+	id: number;
 	description: string;
 	organization: Organization
+}
+
+export type UserWithDetails = User & UserDetails;
+
+export type Group = {
+	id: number;
+	size: number;
+	createdAt: Date;
+	updatedAt: Date;
+	participants: UserWithDetails[];
+}
+
+export type ThemeStatus = 'recruiting' | 'staffed' | 'in progress' | 'completed';
+
+export type Theme = {
+	id: number;
+	title: string;
+	status: ThemeStatus;
+	shortDescription: string;
+	description: string;
+	approver?: UserWithDetails;
+	creator: UserWithDetails;
+	private: boolean;
+	executorsGroup: Group;
+	joinRequests: UserWithDetails[];
+	createdAt: Date;
+	updatedAt: Date;
 }

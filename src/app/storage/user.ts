@@ -1,11 +1,17 @@
 import {dbClient} from '../lib/db-client'
-import {userDetails} from '../types';
+import {UserDetails} from '../types';
 
-export async function getUserDetails(userId: string): Promise<userDetails | null> {
+export type UserDetailsDbEntry = {
+	id: number;
+	uid: string;
+	description: string;
+	organization: number;
+}
 
+export async function getUserDetails(userId: string): Promise<UserDetails | null> {
 	const client = await dbClient.connect()
-	const {rows: userRows} = await client.query<{description: string, organization: number}>(`--sql
-		SELECT description, organization FROM users
+	const {rows: userRows} = await client.query<UserDetailsDbEntry>(`--sql
+		SELECT id, description, organization FROM users
 		WHERE uid =  $1;
 	`,
 		[userId]
@@ -28,7 +34,8 @@ export async function getUserDetails(userId: string): Promise<userDetails | null
 
 	client.release(true)
 
-    const userDetails: userDetails = {
+    const userDetails: UserDetails = {
+		id: userRows[0].id,
 		description: userRows[0].description,
 		organization: {
 			id: organizationRows[0].id,
@@ -81,4 +88,16 @@ export async function createUserRecord(userId: string) {
 	}
 
 	return true;
+}
+
+export async function getUserUidById(id: number) {
+	const {rows} = await dbClient.query<{uid: string}>(`--sql
+		SELECT uid FROM users WHERE id = $1
+	`, [id]);
+
+	if (!rows || !rows.length) {
+		throw new Error('Failed to get user UID');
+	}
+
+	return rows[0].uid;
 }
