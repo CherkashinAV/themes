@@ -46,9 +46,11 @@ export type Group = {
 }
 
 export type ThemeStatus = 'recruiting' | 'staffed' | 'in progress' | 'completed';
+export type ThemeType = 'course' | 'graduation' | 'contest' | 'pet' | 'hackathon';
 
 export type Theme = {
 	id: number;
+	type: ThemeType;
 	title: string;
 	status: ThemeStatus;
 	shortDescription: string;

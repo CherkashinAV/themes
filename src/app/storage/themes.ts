@@ -1,11 +1,12 @@
 import {getUserInfo} from '../integration/user';
 import {dbClient} from '../lib/db-client';
-import {Theme, ThemeStatus} from '../types';
+import {Theme, ThemeStatus, ThemeType} from '../types';
 import {getGroup} from './group';
 import {getJoinRequests} from './joinRequests';
 
 export type createThemePayload = {
 	title: string;
+	type: ThemeType;
 	shortDescription?: string;
 	description: string;
 	creator: number;
@@ -18,6 +19,7 @@ export type ThemeDbEntry = {
 	id: number;
 	title: string;
 	status: ThemeStatus;
+	type: ThemeType;
 	short_description: string;
 	description: string;
 	approver: number;
@@ -32,12 +34,13 @@ export async function createTheme(payload: createThemePayload) {
 	try {
 		const {rows} = await dbClient.query<{id: number}>(`--sql
 			INSERT INTO themes
-			(title, short_description, description, creator, approver, private, executors_group)
+			(title, type, short_description, description, creator, approver, private, executors_group)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7)
+			($1, $2, $3, $4, $5, $6, $7, $8)
 			RETURNING id;
 		`, [
 			payload.title,
+			payload.type ?? 'pet',
 			payload.shortDescription ?? '',
 			payload.description,
 			payload.creator,
@@ -79,6 +82,7 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
     return {
 		id: themeRows[0].id,
 		status: themeRows[0].status,
+		type: themeRows[0].type,
 		title: themeRows[0].title,
 		shortDescription: themeRows[0].short_description,
 		description: themeRows[0].description,
