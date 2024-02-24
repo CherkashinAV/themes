@@ -3,6 +3,7 @@ import {dbClient} from '../lib/db-client';
 import {Theme, ThemeStatus, ThemeType} from '../types';
 import {getGroup} from './group';
 import {getJoinRequests} from './joinRequests';
+import {getUserIdByUid} from './user';
 
 export type createThemePayload = {
 	title: string;
@@ -100,6 +101,18 @@ export async function getAllRecruitingThemes(): Promise<number[]> {
 	const {rows} = await dbClient.query<{id: number}>(`--sql
 		SELECT id FROM themes WHERE status = 'recruiting' AND approver IS NOT NULL;
 	`);
+
+	return rows.map((row) => row.id);
+}
+
+export async function getAllThemesForUser(userUid: string): Promise<number[]> {
+	const userId = await getUserIdByUid(userUid);
+	const {rows} = await dbClient.query<{id: number}>(`--sql
+		SELECT t.id FROM themes AS t
+		LEFT JOIN groups AS g
+		ON t.group = g.id
+		WHERE t.approver = $1 OR g.member = $1;
+	`, [userId]);
 
 	return rows.map((row) => row.id);
 }

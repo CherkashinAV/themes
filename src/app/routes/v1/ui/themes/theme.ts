@@ -9,7 +9,7 @@ const querySchema = z.object({
     themeId: z.number()
 });
 
-export const getThemeHandler = asyncMiddleware(async (req: Request, res: Response) => {
+export const themeHandler = asyncMiddleware(async (req: Request, res: Response) => {
     const validationResult = querySchema.safeParse(req.query);
 
     if (!validationResult.success) {
