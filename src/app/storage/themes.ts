@@ -74,7 +74,7 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 	const creator = await getUserInfo(themeRows[0].creator);
 	const approver = themeRows[0].approver ? await getUserInfo(themeRows[0].approver) : undefined;
 	const executorsGroup = await getGroup(themeRows[0].executors_group);
-	const joinRequests = await getJoinRequests(themeId);
+	const joinRequests = await getJoinRequests(themeRows[0].executors_group);
 
 	if (!executorsGroup) {
 		return null;

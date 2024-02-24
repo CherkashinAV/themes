@@ -56,3 +56,15 @@ export async function getGroup(groupId: number): Promise<Group | null> {
 		participants
 	}
 }
+
+export async function joinGroup(groupId: number, userId: number): Promise<Boolean> {
+	try {
+		await dbClient.query(`--sql
+			INSERT INTO group_members (group_id, member) VALUES ($1, $2);
+		`, [groupId, userId]);
+	} catch (error) {
+		return false;
+	}
+
+	return true;
+}
