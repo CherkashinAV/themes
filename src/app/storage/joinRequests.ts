@@ -13,3 +13,16 @@ export async function getJoinRequests(themeId: number): Promise<UserWithDetails[
 
 	return requesters;
 }
+
+export async function createJoinRequest(themeId: number, userId: number): Promise<boolean> {
+	try {
+		await dbClient.query<{id: number}>(`--sql
+			INSERT INTO join_requests (theme_id, user_id)
+			VALUES ($1, $2);
+		`, [themeId, userId]);
+
+		return true;
+	} catch (error) {
+		return false;
+	}
+}

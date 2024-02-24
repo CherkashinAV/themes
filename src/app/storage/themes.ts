@@ -64,7 +64,7 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 		WHERE id =  $1;
 	`,
 		[themeId]
-	)
+	);
 
 	if (themeRows.length !== 1) {
 		return null;

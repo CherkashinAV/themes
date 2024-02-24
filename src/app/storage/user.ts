@@ -101,3 +101,15 @@ export async function getUserUidById(id: number) {
 
 	return rows[0].uid;
 }
+
+export async function getUserIdByUid(uid: string) {
+	const {rows} = await dbClient.query<{id: number}>(`--sql
+		SELECT id FROM users WHERE uid = $1
+	`, [uid]);
+
+	if (!rows || !rows.length) {
+		throw new Error('Failed to get user id');
+	}
+
+	return rows[0].id;
+}
