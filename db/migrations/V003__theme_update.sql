@@ -1,7 +1,7 @@
 CREATE TYPE status_enum AS ENUM ('recruiting', 'staffed', 'in progress', 'completed');
 
 ALTER TABLE themes
-ADD COLUMN status status_enum NOT NULL DEFAULT 'recruiting' constraint;
+ADD COLUMN status status_enum NOT NULL DEFAULT 'recruiting';
 
 CREATE TABLE join_requests (
 	id SERIAL PRIMARY KEY,

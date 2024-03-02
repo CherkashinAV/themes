@@ -3,7 +3,7 @@ import z from 'zod';
 import {ApiError} from '../../api-error';
 import {Request, Response} from 'express';
 import {formatZodError} from '../../validators';
-import {getUserDetails} from '../../../../storage/user';
+import {checkUserIsExist, createUserRecord, getUserDetails} from '../../../../storage/user';
 import {passportProvider} from '../../../../providers/passport';
 
 const querySchema = z.object({
@@ -28,6 +28,16 @@ export const getProfileHandler = asyncMiddleware(async (req: Request, res: Respo
         }
 
         userInfo = userInfoResponse.value;
+    }
+
+    const isUserExists = await checkUserIsExist(req.currentUser.uid);
+
+    if (!isUserExists) {
+        const creationResult = await createUserRecord(req.currentUser.uid);
+
+        if  (!creationResult) {
+            throw new Error('Create user record failed');
+        }
     }
 
     const userDetails = await getUserDetails(query.userId)

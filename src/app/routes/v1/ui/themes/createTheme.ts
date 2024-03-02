@@ -33,7 +33,7 @@ export const createThemeHandler = asyncMiddleware(async (req: Request, res: Resp
 
 	const creator = await getUserInfo(req.currentUser.uid);
 
-	const themeId = createTheme({
+	const themeId = await createTheme({
 		creator: creator.id,
 		description: body.description,
 		shortDescription: body.shortDescription,

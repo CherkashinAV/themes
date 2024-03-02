@@ -1,9 +1,12 @@
 import asyncMiddleware from 'middleware-async';
 import {Response, Request, NextFunction} from 'express';
-import {passportProvider} from '../providers/passport';
+import {PassportError, passportProvider} from '../providers/passport';
 
 export const passportMiddleware = asyncMiddleware(async (req: Request, res: Response, next: NextFunction) => {
 	const userId = req.headers['x-userid'] as string;
+	if (!userId) {
+		throw new PassportError('UNAUTHORIZED', 'Credentials is invalid');
+	}
 	const userInfoResponse = await passportProvider.userInfo(userId);
 
 	console.log(userInfoResponse)

@@ -6,7 +6,7 @@ import {formatZodError} from '../../validators';
 import {getTheme} from '../../../../storage/themes';
 
 const querySchema = z.object({
-    themeId: z.number()
+    themeId: z.string()
 });
 
 export const themeHandler = asyncMiddleware(async (req: Request, res: Response) => {
@@ -18,7 +18,9 @@ export const themeHandler = asyncMiddleware(async (req: Request, res: Response) 
 
     const query = validationResult.data;
 
-    const theme = await getTheme(query.themeId);
+    const themeId = Number.parseInt(query.themeId, 10);
+
+    const theme = await getTheme(themeId);
 
 	if (!theme) {
 		throw new Error('Failed to get theme');

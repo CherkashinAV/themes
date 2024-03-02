@@ -13,7 +13,7 @@ const bodySchema = z.object({
 	themeId: z.number()
 });
 
-export const createThemeHandler = asyncMiddleware(async (req: Request, res: Response) => {
+export const joinRequestHandler = asyncMiddleware(async (req: Request, res: Response) => {
     const validationResult = bodySchema.safeParse(req.body);
 
     if (!validationResult.success) {

@@ -18,16 +18,6 @@ export const updateProfileHandler = asyncMiddleware(async (req: Request, res: Re
 
     const body = validationResult.data;
 
-    const isUserExists = await checkUserIsExist(req.currentUser.uid);
-
-    if (!isUserExists) {
-        const creationResult = await createUserRecord(req.currentUser.uid);
-
-        if  (!creationResult) {
-            throw new Error('Create user record failed');
-        }
-    }
-
     const updateResult = await updateProfile(req.currentUser.uid, {description: body.description});
 
 	if (!updateResult) {

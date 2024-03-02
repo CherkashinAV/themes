@@ -6,6 +6,7 @@ import {AsyncResult, User} from '../types';
 const passportHttpClient = httpClient;
 
 type PassportErrorCode = 
+	| 'UNAUTHORIZED'
 	| 'BAD_REQUEST'
 	| 'NO_INVITATION_FOR_USER'
 	| 'ALREADY_EXISTS'
@@ -22,7 +23,7 @@ type UserInfoResponse = {
 	data: User
 }
 
-class PassportError extends Error {
+export class PassportError extends Error {
 	code: PassportErrorCode;
 	constructor(code: PassportErrorCode, message: string) {
 		super(message);
