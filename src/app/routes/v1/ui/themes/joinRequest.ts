@@ -30,5 +30,7 @@ export const joinRequestHandler = asyncMiddleware(async (req: Request, res: Resp
 		throw new Error('Failed to create join request');
 	}
 
-    res.status(200).json({status: 'OK'});
+	const user = await getUserInfo(req.currentUser.uid);
+
+    res.status(200).json({status: 'OK', value: user});
 });
