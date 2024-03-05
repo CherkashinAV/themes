@@ -68,3 +68,19 @@ export async function joinGroup(groupId: number, userId: number): Promise<Boolea
 
 	return true;
 }
+
+export async function updateGroupSize(groupId: number, newSize: number) {
+	const query = `--sql
+		UPDATE groups
+		SET size = $1
+		WHERE id = $2;
+	`;
+
+	try {
+		await dbClient.query(query, [newSize, groupId]);
+	} catch {
+		return false;
+	}
+
+	return true;
+}

@@ -1,5 +1,6 @@
 import {getUserInfo} from '../integration/user';
 import {dbClient} from '../lib/db-client';
+import {logger} from '../lib/logger';
 import {Theme, ThemeStatus, ThemeType} from '../types';
 import {getGroup} from './group';
 import {getJoinRequests} from './joinRequests';
@@ -116,3 +117,27 @@ export async function getAllThemesForUser(userUid: string): Promise<number[]> {
 
 	return rows.map((row) => row.id);
 }
+
+export async function updateTheme(payload: {
+	id: number,
+	description: string,
+	shortDescription: string,
+	private: boolean,
+	title: string,
+	type: ThemeType
+}) {
+	const query = `--sql
+		UPDATE themes
+		SET description = $1, short_description = $2, private = $3, title = $4, type = $5
+		WHERE id = $6;
+	`;
+
+	try {
+		await dbClient.query(query, [payload.description, payload.shortDescription, payload.private, payload.title, payload.type, payload.id]);
+	} catch (error){
+		logger.error(error)
+		return false;
+	}
+
+	return true;
+};
