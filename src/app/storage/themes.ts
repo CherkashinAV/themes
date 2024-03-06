@@ -111,8 +111,11 @@ export async function getAllThemesForUser(userUid: string): Promise<number[]> {
 	const {rows} = await dbClient.query<{id: number}>(`--sql
 		SELECT t.id FROM themes AS t
 		LEFT JOIN groups AS g
-		ON t.group = g.id
-		WHERE t.approver = $1 OR g.member = $1;
+		ON t.executors_group = g.id
+		WHERE t.approver = $1 OR $1 IN (
+			SELECT member FROM group_members WHERE
+			group_id = g.id
+		);
 	`, [userId]);
 
 	return rows.map((row) => row.id);

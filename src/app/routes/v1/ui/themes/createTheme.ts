@@ -4,7 +4,7 @@ import {ApiError} from '../../api-error';
 import {Request, Response} from 'express';
 import {formatZodError} from '../../validators';
 import {getUserInfo} from '../../../../integration/user';
-import {createEmptyGroup} from '../../../../storage/group';
+import {createEmptyGroup, joinGroup} from '../../../../storage/group';
 import {createTheme} from '../../../../storage/themes';
 
 const bodySchema = z.object({
@@ -43,6 +43,10 @@ export const createThemeHandler = asyncMiddleware(async (req: Request, res: Resp
 		approver: req.currentUser.role === 'mentor' ? creator.id : undefined,
 		type: body.type
 	});
+
+	if (creator.role === 'default') {
+		await joinGroup(groupId, creator.id);
+	}
 
 	if(!themeId) {
 		throw new Error('Failed to create theme');
