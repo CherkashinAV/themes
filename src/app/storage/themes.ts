@@ -32,6 +32,17 @@ export type ThemeDbEntry = {
 	updated_at: Date;
 }
 
+export type OrderBy = {
+	field: string,
+	order: 'asc' | 'desc'
+}
+
+export type Filters = Partial<{
+	type: ThemeType,
+	private: boolean,
+	slotsCount: number
+}>
+
 export async function createTheme(payload: createThemePayload) {
 	try {
 		const {rows} = await dbClient.query<{id: number}>(`--sql
@@ -98,25 +109,91 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 	};
 }
 
-export async function getAllRecruitingThemes(): Promise<number[]> {
-	const {rows} = await dbClient.query<{id: number}>(`--sql
-		SELECT id FROM themes WHERE status = 'recruiting' AND approver IS NOT NULL;
-	`);
+export async function getAllRecruitingThemes(filters?: Filters, orderBy?: OrderBy): Promise<number[]> {
+	let slotsCount = 1;
+	const defaultQuery = `--sql
+		SELECT t.id FROM themes as t
+		LEFT JOIN groups AS g
+		ON t.executors_group = g.id
+		WHERE status = 'recruiting' AND approver IS NOT NULL
+		AND g.size - (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) >= $1
+	`
+
+	const query = [defaultQuery];
+
+	for (const [key, value] of Object.entries(filters ?? {})) {
+		if (key === 'slotsCount') {
+			if (typeof value === 'number') {
+				slotsCount = value;
+			}
+			continue;
+		}
+		let val;
+
+		if(value) {
+			val = `'${value}'`
+		} else {
+			val = null;
+		}
+
+		query.push(`
+			AND (
+				CASE
+					WHEN ${val} IS NOT NULL THEN ${key} = ${val}
+					ELSE TRUE
+				END
+			)
+		`)
+	}
+
+	if (orderBy?.field && orderBy?.order) {
+		query.push(`ORDER BY ${orderBy.field} ${orderBy.order}`)
+	}
+
+	const {rows} = await dbClient.query<{id: number}>(query.join('\n'), [slotsCount]);
 
 	return rows.map((row) => row.id);
 }
 
-export async function getAllThemesForUser(userUid: string): Promise<number[]> {
+export async function getAllThemesForUser(userUid: string, filters?: Filters, orderBy?: OrderBy): Promise<number[]> {
 	const userId = await getUserIdByUid(userUid);
-	const {rows} = await dbClient.query<{id: number}>(`--sql
+
+	const defaultQuery = `--sql
 		SELECT t.id FROM themes AS t
 		LEFT JOIN groups AS g
 		ON t.executors_group = g.id
 		WHERE t.approver = $1 OR $1 IN (
 			SELECT member FROM group_members WHERE
 			group_id = g.id
-		);
-	`, [userId]);
+		)
+	`
+
+	const query = [defaultQuery];
+
+	for (const [key, value] of Object.entries(filters ?? {})) {
+		let val;
+
+		if(value) {
+			val = `'${value}'`
+		} else {
+			val = null;
+		}
+
+		query.push(`
+			AND (
+				CASE
+					WHEN ${val} IS NOT NULL THEN ${key} = ${val}
+					ELSE TRUE
+				END
+			)
+		`)
+	}
+
+	if (orderBy?.field && orderBy?.order) {
+		query.push(` ORDER BY ${orderBy.field} ${orderBy.order}`)
+	}
+
+	const {rows} = await dbClient.query<{id: number}>(query.join('\n'), [userId]);
 
 	return rows.map((row) => row.id);
 }

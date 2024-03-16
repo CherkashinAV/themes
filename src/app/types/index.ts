@@ -63,3 +63,5 @@ export type Theme = {
 	createdAt: Date;
 	updatedAt: Date;
 }
+
+export type NotificationType = 'INVITE_MENTOR' | 'MENTOR_RESPONSE' | 'THEME_STATUS';
