@@ -1,4 +1,5 @@
 import {dbClient} from '../lib/db-client';
+import {logger} from '../lib/logger';
 import {NotificationType} from '../types';
 import {getUserIdByUid} from './user';
 
@@ -23,8 +24,25 @@ export async function createNotification(payload: {
 export async function getNotifications(userUid: string) {
 	const userId = await getUserIdByUid(userUid);
 	const {rows} = await dbClient.query(`--sql
-		SELECT type, created_at, attributes, new FROM notifications WHERE user_id = $1;
+		SELECT id, type, created_at, attributes, new FROM notifications WHERE user_id = $1;
 	`, [userId]);
 
 	return rows.map((row) => ({...row, createdAt: row.created_at}));
+}
+
+export async function notificationLook(notificationId: number) {
+	const query = `--sql
+		UPDATE notifications
+		SET new=false
+		WHERE id=$1
+	`;
+
+	try {
+		await dbClient.query(query, [notificationId]);
+	} catch (error){
+		logger.error(error)
+		return false;
+	}
+
+	return true;
 }

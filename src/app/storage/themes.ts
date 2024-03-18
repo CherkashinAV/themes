@@ -158,7 +158,7 @@ export async function getAllRecruitingThemes(filters?: Filters, orderBy?: OrderB
 export async function getAllThemesForUser(userUid: string, filters?: Filters, orderBy?: OrderBy): Promise<number[]> {
 	const userId = await getUserIdByUid(userUid);
 
-	const defaultQuery = `--sql
+	const query = `--sql
 		SELECT t.id FROM themes AS t
 		LEFT JOIN groups AS g
 		ON t.executors_group = g.id
@@ -168,32 +168,7 @@ export async function getAllThemesForUser(userUid: string, filters?: Filters, or
 		)
 	`
 
-	const query = [defaultQuery];
-
-	for (const [key, value] of Object.entries(filters ?? {})) {
-		let val;
-
-		if(value) {
-			val = `'${value}'`
-		} else {
-			val = null;
-		}
-
-		query.push(`
-			AND (
-				CASE
-					WHEN ${val} IS NOT NULL THEN ${key} = ${val}
-					ELSE TRUE
-				END
-			)
-		`)
-	}
-
-	if (orderBy?.field && orderBy?.order) {
-		query.push(` ORDER BY ${orderBy.field} ${orderBy.order}`)
-	}
-
-	const {rows} = await dbClient.query<{id: number}>(query.join('\n'), [userId]);
+	const {rows} = await dbClient.query<{id: number}>(query, [userId]);
 
 	return rows.map((row) => row.id);
 }

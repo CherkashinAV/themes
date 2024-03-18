@@ -8,6 +8,7 @@ import {acceptJoinRequestHandler} from './acceptJoinRequest';
 import {deleteRequestHandler} from './deleteRequest';
 import {updateThemeHandler} from './updateTheme';
 import {mentorInviteHandler} from './mentorInvite';
+import {mentorResponseHandler} from './mentorResponse';
 
 export const themeRouter: Router = Router()
 	.use(bodyParser.json())
@@ -15,6 +16,7 @@ export const themeRouter: Router = Router()
 	.post('/join_request', joinRequestHandler)
 	.post('/accept_request', acceptJoinRequestHandler)
 	.post('/invite_mentor', mentorInviteHandler)
+	.post('/mentor_invite_response', mentorResponseHandler)
 	.get('/all', allThemesHandler)
 	.get('/', themeHandler)
 	.delete('/delete_request', deleteRequestHandler)
