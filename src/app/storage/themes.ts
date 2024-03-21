@@ -196,3 +196,22 @@ export async function updateTheme(payload: {
 
 	return true;
 };
+
+export async function addMentor(mentorUid: string, themeId: number) {
+	const mentorId = await getUserIdByUid(mentorUid);
+
+	const query = `--sql
+		UPDATE themes
+		SET approver = $1
+		WHERE id = $2;
+	`;
+
+	try {
+		await dbClient.query(query, [mentorId, themeId]);
+	} catch (error){
+		logger.error(error)
+		return false;
+	}
+
+	return true;
+}

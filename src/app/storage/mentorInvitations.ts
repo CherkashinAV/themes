@@ -25,10 +25,10 @@ export async function mentorInvitationResponse(payload: {
 	mentorUid: string,
 	action: 'accept' | 'reject'
 }) {
-	const mentorId = getUserIdByUid(payload.mentorUid)
+	const mentorId = await getUserIdByUid(payload.mentorUid)
 
 	const query = `--sql
-		UPDATE invitations
+		UPDATE mentor_invitations
 		SET status=$1
 		WHERE 
 			theme_id = $2 AND

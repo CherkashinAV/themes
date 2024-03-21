@@ -4,10 +4,12 @@ import {ApiError} from '../../api-error';
 import {Request, Response} from 'express';
 import {formatZodError} from '../../validators';
 import {mentorInvitationResponse} from '../../../../storage/mentorInvitations';
-import {createNotification} from '../../../../storage/notifications';
+import {createNotification, notificationInteract} from '../../../../storage/notifications';
+import {addMentor} from '../../../../storage/themes';
 
 const bodySchema = z.object({
 	themeId: z.number(),
+	notificationId: z.number(),
 	action: z.union([
 		z.literal('accept'),
 		z.literal('reject')
@@ -33,6 +35,12 @@ export const mentorResponseHandler = asyncMiddleware(async (req: Request, res: R
 		throw new Error('Failed to update invitation');
 	}
 
+	const interactNotificationResult = await notificationInteract(body.notificationId);
+
+	if (!interactNotificationResult) {
+		throw new Error('Failed to update notification');
+	}
+
 	const notificationResult = await createNotification({
 		type: 'MENTOR_RESPONSE',
 		userUid: inviterUid,
@@ -46,6 +54,14 @@ export const mentorResponseHandler = asyncMiddleware(async (req: Request, res: R
 
 	if (!notificationResult) {
 		throw new Error('Failed to create notification');
+	}
+
+	if (body.action === 'accept') {
+		const mentorSetResult = await addMentor(req.currentUser.uid, body.themeId);
+
+		if (!mentorSetResult) {
+			throw new Error('Failed to set mentor');
+		}
 	}
 
     res.status(200).json({status: 'OK'});

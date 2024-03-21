@@ -6,5 +6,6 @@ CREATE TABLE notifications (
 	user_id integer NOT NULL REFERENCES users (id),
 	created_at timestamptz NOT NULL DEFAULT NOW(),
 	attributes jsonb,
+	interacted boolean DEFAULT false,
 	new boolean NOT NULL DEFAULT true
 );
