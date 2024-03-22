@@ -9,8 +9,6 @@ export const passportMiddleware = asyncMiddleware(async (req: Request, res: Resp
 	}
 	const userInfoResponse = await passportProvider.userInfo(userId);
 
-	console.log(userInfoResponse)
-
 	if (!userInfoResponse.ok) {
 		throw new Error('User info request failed');
 	}

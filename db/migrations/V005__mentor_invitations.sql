@@ -1,4 +1,4 @@
-CREATE TYPE mentor_invitation_status_enum AS ENUM ('pending', 'accepted', 'rejected');
+CREATE TYPE mentor_invitation_status_enum AS ENUM ('pending', 'accepted', 'rejected', 'not_relevant');
 
 CREATE TABLE mentor_invitations (
 	id SERIAL PRIMARY KEY,

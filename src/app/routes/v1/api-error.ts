@@ -2,7 +2,8 @@ export type ApiErrorCode = |
     'BAD_REQUEST' |
     'NOT_FOUND' |
     'INVALID_SECRET' |
-    'NOT_ENOUGH_RIGHTS';
+    'NOT_ENOUGH_RIGHTS' |
+    'ALREADY_EXIST';
 
 export class ApiError extends Error {
     code: ApiErrorCode;

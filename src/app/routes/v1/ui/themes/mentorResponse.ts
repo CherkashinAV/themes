@@ -3,9 +3,10 @@ import z from 'zod';
 import {ApiError} from '../../api-error';
 import {Request, Response} from 'express';
 import {formatZodError} from '../../validators';
-import {mentorInvitationResponse} from '../../../../storage/mentorInvitations';
-import {createNotification, notificationInteract} from '../../../../storage/notifications';
-import {addMentor} from '../../../../storage/themes';
+import {declinePendingInvitations, mentorInvitationResponse} from '../../../../storage/mentorInvitations';
+import {createNotification, notificationInteract, setNotificationAttribute} from '../../../../storage/notifications';
+import {addMentor, getTheme} from '../../../../storage/themes';
+import {logger} from '../../../../lib/logger';
 
 const bodySchema = z.object({
 	themeId: z.number(),
@@ -29,6 +30,16 @@ export const mentorResponseHandler = asyncMiddleware(async (req: Request, res: R
 		throw new ApiError('NOT_ENOUGH_RIGHTS', 403, 'Not enough rights to accept join requests');
 	}
 
+	const theme = await getTheme(body.themeId);
+
+	if (!theme) {
+		throw new Error('Failed to get theme')
+	}
+
+	if (theme.approver) {
+		throw new ApiError('ALREADY_EXIST', 409, 'This theme already has a mentor');
+	}
+
 	let inviterUid = await mentorInvitationResponse({...body, mentorUid: req.currentUser.uid});
 
 	if (!inviterUid) {
@@ -50,7 +61,10 @@ export const mentorResponseHandler = asyncMiddleware(async (req: Request, res: R
 			mentorUid: req.currentUser.uid,
 			status: body.action === 'accept' ? 'accepted' : 'rejected'
 		}
-	})
+	});
+
+	logger.error(body.notificationId);
+	await setNotificationAttribute(body.notificationId, 'invitationStatus', body.action === 'accept' ? 'accepted' : 'rejected')
 
 	if (!notificationResult) {
 		throw new Error('Failed to create notification');
@@ -62,6 +76,8 @@ export const mentorResponseHandler = asyncMiddleware(async (req: Request, res: R
 		if (!mentorSetResult) {
 			throw new Error('Failed to set mentor');
 		}
+
+		await declinePendingInvitations(body.themeId);
 	}
 
     res.status(200).json({status: 'OK'});

@@ -66,3 +66,20 @@ export async function notificationInteract(notificationId: number) {
 
 	return true;
 }
+
+export async function setNotificationAttribute(notificationId: number, key: string, value: string) {
+	const query = `--sql
+		UPDATE notifications
+		SET attributes = jsonb_set(attributes, '{${key}}', '"${value}"')
+		WHERE id=$1
+	`;
+
+	try {
+		await dbClient.query(query, [notificationId]);
+	} catch (error){
+		logger.error(error)
+		return false;
+	}
+
+	return true;
+}

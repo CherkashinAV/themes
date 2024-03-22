@@ -9,21 +9,26 @@ export async function inviteMentor(payload: {
 }) {
 	const mentorId = await getUserIdByUid(payload.mentorUid);
 	try {
-		await dbClient.query<{id: number}>(`--sql
+		const {rows} = await dbClient.query<{id: number}>(`--sql
 			INSERT INTO mentor_invitations (mentor_id, theme_id, inviter)
-			VALUES ($1, $2, $3);
+			VALUES ($1, $2, $3)
+			RETURNING id;
 		`, [mentorId, payload.themeId, payload.inviter]);
 
-		return true;
+		if (!rows || rows.length !== 1) {
+			return null
+		}
+
+		return rows[0].id;
 	} catch (error) {
-		return false;
+		return null;
 	}
 }
 
 export async function mentorInvitationResponse(payload: {
 	themeId: number,
 	mentorUid: string,
-	action: 'accept' | 'reject'
+	action: 'accept' | 'reject' | 'not_relevant'
 }) {
 	const mentorId = await getUserIdByUid(payload.mentorUid)
 
@@ -49,5 +54,28 @@ export async function mentorInvitationResponse(payload: {
 	} catch (error){
 		logger.error(error)
 		return null;
+	}
+}
+
+export async function declinePendingInvitations(themeId: number) {
+	const query = `--sql
+		UPDATE mentor_invitations
+		SET status='not_relevant'
+		WHERE 
+			theme_id = $1 AND
+			status = 'pending'
+	`;
+
+	try {
+		const {rows} = await dbClient.query<{inviter: string}>(query, [themeId]);
+
+		if (!rows || rows.length !== 1) {
+			return null;
+		}
+
+		return true;
+	} catch (error){
+		logger.error(error)
+		return false;
 	}
 }

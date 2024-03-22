@@ -20,9 +20,9 @@ export const mentorInviteHandler = asyncMiddleware(async (req: Request, res: Res
 
     const body = validationResult.data;
 
-    const inviteResult = await inviteMentor({...body, inviter: req.currentUser.uid});
+    const invitationId = await inviteMentor({...body, inviter: req.currentUser.uid});
 
-	if (!inviteResult) {
+	if (!invitationId) {
 		throw new Error('Failed to invite mentor');
 	}
 
@@ -31,6 +31,7 @@ export const mentorInviteHandler = asyncMiddleware(async (req: Request, res: Res
         type: 'INVITE_MENTOR',
         attributes: {
             inviterUid: req.currentUser.uid,
+            invitationId,
             inviterName: `${req.currentUser.name} ${req.currentUser.surname}`,
             themeId: body.themeId
         }
