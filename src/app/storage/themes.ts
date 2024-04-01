@@ -1,7 +1,7 @@
 import {getUserInfo} from '../integration/user';
 import {dbClient} from '../lib/db-client';
 import {logger} from '../lib/logger';
-import {Theme, ThemeStatus, ThemeType} from '../types';
+import {Theme, ThemeStatus, ThemeType, TeachingMaterial, DateInterval} from '../types';
 import {getGroup} from './group';
 import {getJoinRequests} from './joinRequests';
 import {getUserIdByUid} from './user';
@@ -15,6 +15,9 @@ export type createThemePayload = {
 	approver?: number;
 	private: boolean;
 	executorsGroup: number;
+	teachingMaterials: TeachingMaterial[] | null;
+	joinDate: string;
+	realizationDates: DateInterval;
 }
 
 export type ThemeDbEntry = {
@@ -28,6 +31,9 @@ export type ThemeDbEntry = {
 	creator: number;
 	private: boolean;
 	executors_group: number;
+	teaching_materials: TeachingMaterial[] | null,
+	join_date: string;
+	realization_dates: DateInterval;
 	created_at: Date;
 	updated_at: Date;
 }
@@ -47,9 +53,9 @@ export async function createTheme(payload: createThemePayload) {
 	try {
 		const {rows} = await dbClient.query<{id: number}>(`--sql
 			INSERT INTO themes
-			(title, type, short_description, description, creator, approver, private, executors_group)
+			(title, type, short_description, description, creator, approver, private, executors_group, teaching_materials, join_date, realization_dates)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8)
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 			RETURNING id;
 		`, [
 			payload.title,
@@ -59,7 +65,10 @@ export async function createTheme(payload: createThemePayload) {
 			payload.creator,
 			payload.approver ?? null,
 			payload.private,
-			payload.executorsGroup
+			payload.executorsGroup,
+			payload.teachingMaterials ? JSON.stringify(payload.teachingMaterials) : null,
+			payload.joinDate,
+			JSON.stringify(payload.realizationDates)
 		]);
 		if (rows.length !== 1) {
 			return null;
@@ -67,6 +76,7 @@ export async function createTheme(payload: createThemePayload) {
 
 		return rows[0].id;
 	} catch (error) {
+		logger.error(error)
 		return null;
 	}
 }
@@ -102,6 +112,9 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 		private: themeRows[0].private,
 		createdAt: themeRows[0].created_at,
 		updatedAt: themeRows[0].updated_at,
+		teachingMaterials: themeRows[0].teaching_materials,
+		joinDate: themeRows[0].join_date,
+		realizationDates: themeRows[0].realization_dates,
 		creator,
 		approver,
 		executorsGroup,
@@ -179,16 +192,36 @@ export async function updateTheme(payload: {
 	shortDescription: string,
 	private: boolean,
 	title: string,
+	teachingMaterials: TeachingMaterial[] | null,
+	joinDate: string,
+	realizationDates: DateInterval,
 	type: ThemeType
 }) {
 	const query = `--sql
 		UPDATE themes
-		SET description = $1, short_description = $2, private = $3, title = $4, type = $5
-		WHERE id = $6;
+		SET
+			description = $1,
+			short_description = $2,
+			private = $3,
+			title = $4,
+			type = $5,
+			teaching_materials = $6,
+			join_date = $7,
+			realization_dates = $8
+		WHERE id = $9;
 	`;
 
 	try {
-		await dbClient.query(query, [payload.description, payload.shortDescription, payload.private, payload.title, payload.type, payload.id]);
+		await dbClient.query(query, [payload.description,
+			payload.shortDescription,
+			payload.private,
+			payload.title,
+			payload.type,
+			payload.teachingMaterials ? JSON.stringify(payload.teachingMaterials) : null,
+			payload.joinDate,
+			JSON.stringify(payload.realizationDates),
+			payload.id
+		]);
 	} catch (error){
 		logger.error(error)
 		return false;

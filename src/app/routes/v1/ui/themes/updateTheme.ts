@@ -14,7 +14,16 @@ const bodySchema = z.object({
 	description: z.string(),
 	private: z.boolean(),
 	executorsCount: z.number(),
-	type: z.enum(['course', 'graduation', 'contest', 'pet', 'hackathon'])
+	teachingMaterials: z.array(z.object({
+		title: z.string(),
+		link: z.string().url()
+	})).nullable(),
+	type: z.enum(['course', 'graduation', 'contest', 'pet', 'hackathon']),
+	joinDate: z.string(),
+	realizationDates: z.object({
+		from: z.string(),
+		to: z.string()
+	})
 });
 
 export const updateThemeHandler = asyncMiddleware(async (req: Request, res: Response) => {
@@ -45,7 +54,10 @@ export const updateThemeHandler = asyncMiddleware(async (req: Request, res: Resp
 		shortDescription: body.shortDescription,
 		private: body.private,
 		title: body.title,
-		type: body.type
+		teachingMaterials: body.teachingMaterials ?? null,
+		type: body.type,
+		joinDate: body.joinDate,
+		realizationDates: body.realizationDates
 	});
 
 	if(!updateResult) {

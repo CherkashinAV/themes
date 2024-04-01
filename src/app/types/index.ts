@@ -45,8 +45,18 @@ export type Group = {
 	participants: UserWithDetails[];
 }
 
+export type TeachingMaterial = {
+	title: string;
+	link: string;
+}
+
 export type ThemeStatus = 'recruiting' | 'staffed' | 'in progress' | 'completed';
 export type ThemeType = 'course' | 'graduation' | 'contest' | 'pet' | 'hackathon';
+
+export type DateInterval = {
+	from: string;
+	to: string;
+}
 
 export type Theme = {
 	id: number;
@@ -59,7 +69,10 @@ export type Theme = {
 	creator: UserWithDetails;
 	private: boolean;
 	executorsGroup: Group;
-	joinRequests: UserWithDetails[];
+	teachingMaterials: TeachingMaterial[] | null;
+	joinDate: string;
+	realizationDates: DateInterval,
+	joinRequests: {user: UserWithDetails, requestDateTime: string}[];
 	createdAt: Date;
 	updatedAt: Date;
 }

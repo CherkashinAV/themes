@@ -13,7 +13,16 @@ const bodySchema = z.object({
 	description: z.string(),
 	private: z.boolean(),
 	executorsCount: z.number(),
-	type: z.enum(['course', 'graduation', 'contest', 'pet', 'hackathon'])
+	type: z.enum(['course', 'graduation', 'contest', 'pet', 'hackathon']),
+	teachingMaterials: z.array(z.object({
+		title: z.string(),
+		link: z.string().url()
+	})).nullable(),
+	joinDate: z.string(),
+	realizationDates: z.object({
+		from: z.string(),
+		to: z.string()
+	})
 });
 
 export const createThemeHandler = asyncMiddleware(async (req: Request, res: Response) => {
@@ -41,7 +50,10 @@ export const createThemeHandler = asyncMiddleware(async (req: Request, res: Resp
 		private: body.private,
 		title: body.title,
 		approver: req.currentUser.role === 'mentor' ? creator.id : undefined,
-		type: body.type
+		teachingMaterials: body.teachingMaterials ?? null,
+		type: body.type,
+		joinDate: body.joinDate,
+		realizationDates: body.realizationDates
 	});
 
 	if (creator.role === 'default') {

@@ -32,5 +32,8 @@ export const joinRequestHandler = asyncMiddleware(async (req: Request, res: Resp
 
 	const user = await getUserInfo(req.currentUser.uid);
 
-    res.status(200).json({status: 'OK', value: user});
+    res.status(200).json({status: 'OK', value: {
+		user,
+		requestDateTime: creationResult
+	}});
 });

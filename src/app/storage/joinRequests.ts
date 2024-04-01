@@ -2,28 +2,34 @@ import {getUserInfo} from '../integration/user';
 import {dbClient} from '../lib/db-client';
 import {UserWithDetails} from '../types';
 
-export async function getJoinRequests(groupId: number): Promise<UserWithDetails[]> {
-	const {rows: requestsRows} = await dbClient.query<{user_id: number}>(`--sql
-		SELECT user_id FROM join_requests WHERE group_id = $1;
+export async function getJoinRequests(groupId: number): Promise<{user: UserWithDetails, requestDateTime: string}[]> {
+	const {rows: requestsRows} = await dbClient.query<{user_id: number, created_at: string}>(`--sql
+		SELECT user_id, created_at FROM join_requests WHERE group_id = $1;
 	`, [groupId]);
 
 	const requesters = await Promise.all(
-		requestsRows.map((row) => getUserInfo(row.user_id))
+		requestsRows.map((row) => {
+			return (async () => ({
+				requestDateTime: row.created_at,
+				user: await getUserInfo(row.user_id)
+			}))()
+		})
 	);
 
 	return requesters;
 }
 
-export async function createJoinRequest(groupId: number, userId: number): Promise<boolean> {
+export async function createJoinRequest(groupId: number, userId: number): Promise<string | null> {
 	try {
-		await dbClient.query<{id: number}>(`--sql
+		const {rows} = await dbClient.query<{created_at: string}>(`--sql
 			INSERT INTO join_requests (group_id, user_id)
-			VALUES ($1, $2);
+			VALUES ($1, $2)
+			RETURNING created_at;
 		`, [groupId, userId]);
 
-		return true;
+		return rows[0].created_at;
 	} catch (error) {
-		return false;
+		return null;
 	}
 }
 
