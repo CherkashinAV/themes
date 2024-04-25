@@ -18,6 +18,8 @@ export type User = {
 	email: string;
 	role: Role;
 	uid: string;
+	post: string | null;
+	group: string | null;
 }
 
 export type Organization = {
@@ -32,7 +34,9 @@ export type Organization = {
 export type UserDetails = {
 	id: number;
 	description: string;
-	organization: Organization
+	organization: Organization;
+	post: string | null;
+	group: string | null;
 }
 
 export type UserWithDetails = User & UserDetails;
@@ -75,6 +79,27 @@ export type Theme = {
 	joinRequests: {user: UserWithDetails, requestDateTime: string}[];
 	createdAt: Date;
 	updatedAt: Date;
+	ruleId: number | null;
 }
+
+export type Rule = {
+	id: number;
+	joinDate: string;
+	realizationDates: DateInterval;
+	title: string;
+	type: ThemeType;
+	expirationDate: string;
+	downloadLink: string;
+	organizationId: number;
+}
+
+export type OrderData = Record<string, {
+	executorName: string,
+	head: {
+		name: string,
+		post: string
+	},
+	themeTitle: string
+}[]>
 
 export type NotificationType = 'INVITE_MENTOR' | 'MENTOR_RESPONSE' | 'THEME_STATUS';

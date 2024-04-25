@@ -1,7 +1,7 @@
 import {getUserInfo} from '../integration/user';
 import {dbClient} from '../lib/db-client';
 import {logger} from '../lib/logger';
-import {Theme, ThemeStatus, ThemeType, TeachingMaterial, DateInterval} from '../types';
+import {Theme, ThemeStatus, ThemeType, TeachingMaterial, DateInterval, OrderData} from '../types';
 import {getGroup} from './group';
 import {getJoinRequests} from './joinRequests';
 import {getUserIdByUid} from './user';
@@ -18,6 +18,7 @@ export type createThemePayload = {
 	teachingMaterials: TeachingMaterial[] | null;
 	joinDate: string;
 	realizationDates: DateInterval;
+	ruleId: number | null;
 }
 
 export type ThemeDbEntry = {
@@ -36,6 +37,7 @@ export type ThemeDbEntry = {
 	realization_dates: DateInterval;
 	created_at: Date;
 	updated_at: Date;
+	rule_id: number | null;
 }
 
 export type OrderBy = {
@@ -53,9 +55,9 @@ export async function createTheme(payload: createThemePayload) {
 	try {
 		const {rows} = await dbClient.query<{id: number}>(`--sql
 			INSERT INTO themes
-			(title, type, short_description, description, creator, approver, private, executors_group, teaching_materials, join_date, realization_dates)
+			(title, type, short_description, description, creator, approver, private, executors_group, teaching_materials, join_date, realization_dates, rule_id)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 			RETURNING id;
 		`, [
 			payload.title,
@@ -68,7 +70,8 @@ export async function createTheme(payload: createThemePayload) {
 			payload.executorsGroup,
 			payload.teachingMaterials ? JSON.stringify(payload.teachingMaterials) : null,
 			payload.joinDate,
-			JSON.stringify(payload.realizationDates)
+			JSON.stringify(payload.realizationDates),
+			payload.ruleId
 		]);
 		if (rows.length !== 1) {
 			return null;
@@ -118,7 +121,8 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 		creator,
 		approver,
 		executorsGroup,
-		joinRequests
+		joinRequests,
+		ruleId: themeRows[0].rule_id
 	};
 }
 
@@ -178,7 +182,7 @@ export async function getAllThemesForUser(userUid: string, filters?: Filters, or
 		WHERE t.approver = $1 OR $1 IN (
 			SELECT member FROM group_members WHERE
 			group_id = g.id
-		)
+		) OR t.creator = $1
 	`
 
 	const {rows} = await dbClient.query<{id: number}>(query, [userId]);
@@ -195,7 +199,8 @@ export async function updateTheme(payload: {
 	teachingMaterials: TeachingMaterial[] | null,
 	joinDate: string,
 	realizationDates: DateInterval,
-	type: ThemeType
+	type: ThemeType,
+	ruleId: number | null
 }) {
 	const query = `--sql
 		UPDATE themes
@@ -207,12 +212,14 @@ export async function updateTheme(payload: {
 			type = $5,
 			teaching_materials = $6,
 			join_date = $7,
-			realization_dates = $8
-		WHERE id = $9;
+			realization_dates = $8,
+			rule_id = $9
+		WHERE id = $10;
 	`;
 
 	try {
-		await dbClient.query(query, [payload.description,
+		await dbClient.query(query, [
+			payload.description,
 			payload.shortDescription,
 			payload.private,
 			payload.title,
@@ -220,6 +227,7 @@ export async function updateTheme(payload: {
 			payload.teachingMaterials ? JSON.stringify(payload.teachingMaterials) : null,
 			payload.joinDate,
 			JSON.stringify(payload.realizationDates),
+			payload.ruleId,
 			payload.id
 		]);
 	} catch (error){
@@ -247,4 +255,49 @@ export async function addMentor(mentorUid: string, themeId: number) {
 	}
 
 	return true;
+}
+
+export async function getOrderData(ruleId: number) {
+	const query = `--sql
+		SELECT id FROM themes
+		WHERE rule_id = $1 AND approver IS NOT NULL;
+	`
+
+	const {rows} = await dbClient.query<{id: number}>(query, [ruleId]);
+
+	const ids = rows.map((row) => row.id);
+	const themes: Theme[] = [];
+
+	for (const themeId of ids) {
+		const theme = await getTheme(themeId);
+
+		if (!theme) {
+			continue;
+		}
+
+		themes.push(theme);
+	}
+
+	const orderData: OrderData = {};
+	for (const theme of themes) {
+		const executors = theme.executorsGroup.participants;
+		const head = theme.approver!;
+		for (const executor of executors) {
+			const group = executor.group ?? 'NО_GROUP';
+			if (!orderData[group]) {
+				orderData[group] = [] as any;
+			}
+
+			orderData[group].push({
+				executorName: executor.name + ' ' + executor.surname,
+				head: {
+					name: head.name + ' ' + head.surname,
+					post: head.post ?? ''
+				},
+				themeTitle: theme.title
+			})
+		}
+	}
+
+	return orderData;
 }

@@ -4,8 +4,6 @@ import {ApiError} from '../../api-error';
 import {Request, Response} from 'express';
 import {formatZodError} from '../../validators';
 import {getUserInfo} from '../../../../integration/user';
-import {createEmptyGroup} from '../../../../storage/group';
-import {createTheme} from '../../../../storage/themes';
 import {createJoinRequest} from '../../../../storage/joinRequests';
 import {getUserIdByUid} from '../../../../storage/user';
 

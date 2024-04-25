@@ -1,6 +1,10 @@
-INSERT INTO users (uid) VALUES ('11111111-f625-41ca-a353-068d6ed70fc5');
-INSERT INTO users (uid) VALUES ('22222222-f625-41ca-a353-068d6ed70fc5');
-INSERT INTO users (uid) VALUES ('33333333-f625-41ca-a353-068d6ed70fc5');
+INSERT INTO organizations (short_name, full_name, description)
+VALUES ('МАИ', 'Московский авиационный институт (национальный исследовательский университет)', 'Лучшие люди страны');
+
+INSERT INTO users (uid, organization, group_name) VALUES ('11111111-f625-41ca-a353-068d6ed70fc5', 2, 'M8О-406Б-20');
+INSERT INTO users (uid, organization, group_name) VALUES ('22222222-f625-41ca-a353-068d6ed70fc5', 2, 'М8О-405Б-20');
+INSERT INTO users (uid, organization, post) VALUES ('33333333-f625-41ca-a353-068d6ed70fc5', 2, 'доцент каф.806');
+INSERT INTO users (uid, organization) VALUES ('44444444-f625-41ca-a353-068d6ed70fc5', 2);
 
 INSERT INTO groups (size) VALUES (1); -- 1
 INSERT INTO groups (size) VALUES (1); -- 2

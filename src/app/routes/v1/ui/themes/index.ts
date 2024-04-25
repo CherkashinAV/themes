@@ -9,6 +9,7 @@ import {deleteRequestHandler} from './deleteRequest';
 import {updateThemeHandler} from './updateTheme';
 import {mentorInviteHandler} from './mentorInvite';
 import {mentorResponseHandler} from './mentorResponse';
+import {inviteHandler} from '../admin/invite';
 
 export const themeRouter: Router = Router()
 	.use(bodyParser.json())

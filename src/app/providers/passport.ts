@@ -1,7 +1,16 @@
 import {Method, Response} from 'got';
 import {config} from '../config';
 import {httpClient} from '../lib/httpClient';
-import {AsyncResult, User} from '../types';
+import {AsyncResult, Role, User} from '../types';
+
+export type RegistrationInvitePayload = {
+	email: string;
+	name: string;
+	surname: string;
+	role: Role;
+	linkToRegisterForm: string;
+	accessToken: string;
+};
 
 const passportHttpClient = httpClient;
 
@@ -84,6 +93,23 @@ class PassportProvider {
 		return {
 			ok: true,
 			value: response.value.data
+		}
+	}
+
+	async registrationInvite(payload: RegistrationInvitePayload): AsyncResult<{uid: string}, PassportError> {
+		const response = await this._request<{uid: string}>({
+			method: 'POST',
+			body: payload,
+			path: 'registration_invite'
+		});
+
+		if (!response.ok) {
+			return response;
+		}
+
+		return {
+			ok: true,
+			value: response.value
 		}
 	}
 }

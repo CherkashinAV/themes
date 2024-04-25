@@ -3,10 +3,12 @@ import {ApiError} from './api-error';
 import {logger} from '../../lib/logger';
 import {uiRouter} from './ui';
 import {passportMiddleware} from '../../middlewares/passport';
+import {adminRouter} from './ui/admin';
 
 export const v1Router: Router = Router()
     .use(passportMiddleware)
     .use('/ui', uiRouter)
+    .use('/admin', adminRouter)
     .use((error: Error, _req: Request, res: Response, next: NextFunction) => {
         if (error instanceof ApiError) {
             const errorBody = {

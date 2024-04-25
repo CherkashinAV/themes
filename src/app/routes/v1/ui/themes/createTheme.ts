@@ -22,7 +22,8 @@ const bodySchema = z.object({
 	realizationDates: z.object({
 		from: z.string(),
 		to: z.string()
-	})
+	}),
+	ruleId: z.number().nullable()
 });
 
 export const createThemeHandler = asyncMiddleware(async (req: Request, res: Response) => {
@@ -53,7 +54,8 @@ export const createThemeHandler = asyncMiddleware(async (req: Request, res: Resp
 		teachingMaterials: body.teachingMaterials ?? null,
 		type: body.type,
 		joinDate: body.joinDate,
-		realizationDates: body.realizationDates
+		realizationDates: body.realizationDates,
+		ruleId: body.ruleId
 	});
 
 	if (creator.role === 'default') {

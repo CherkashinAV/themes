@@ -6,12 +6,14 @@ export type UserDetailsDbEntry = {
 	uid: string;
 	description: string;
 	organization: number;
+	group_name: string | null;
+	post: string | null;
 }
 
 export async function getUserDetails(userId: string): Promise<UserDetails | null> {
 	const client = await dbClient.connect()
 	const {rows: userRows} = await client.query<UserDetailsDbEntry>(`--sql
-		SELECT id, description, organization FROM users
+		SELECT id, description, organization, group_name, post FROM users
 		WHERE uid =  $1;
 	`,
 		[userId]
@@ -44,7 +46,9 @@ export async function getUserDetails(userId: string): Promise<UserDetails | null
 			fullName: organizationRows[0].full_name,
 			description: organizationRows[0].description,
 			attributes: organizationRows[0].attributes
-		}
+		},
+		group: userRows[0].group_name,
+		post: userRows[0].post
 	}
 
     return userDetails;
@@ -78,11 +82,14 @@ export async function checkUserIsExist(userId: string) {
 	return true;
 } 
 
-export async function createUserRecord(userId: string) {
+export async function createUserRecord(userId: string, organizationId?: number) {
+	const query = organizationId ?
+		`INSERT INTO users (uid, organization) VALUES ('${userId}', ${organizationId});`
+		:
+		`INSERT INTO users (uid) VALUES ('${userId}');`
+
 	try {
-		await dbClient.query(`--sql
-			INSERT INTO users (uid) VALUES ($1);
-		`, [userId]);
+		await dbClient.query(query);
 	} catch (error) {
 		return false;
 	}
