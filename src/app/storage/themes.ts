@@ -19,6 +19,7 @@ export type createThemePayload = {
 	joinDate: string;
 	realizationDates: DateInterval;
 	ruleId: number | null;
+	orgId: number;
 }
 
 export type ThemeDbEntry = {
@@ -32,6 +33,7 @@ export type ThemeDbEntry = {
 	creator: number;
 	private: boolean;
 	executors_group: number;
+	organization_id: number;
 	teaching_materials: TeachingMaterial[] | null,
 	join_date: string;
 	realization_dates: DateInterval;
@@ -55,9 +57,9 @@ export async function createTheme(payload: createThemePayload) {
 	try {
 		const {rows} = await dbClient.query<{id: number}>(`--sql
 			INSERT INTO themes
-			(title, type, short_description, description, creator, approver, private, executors_group, teaching_materials, join_date, realization_dates, rule_id)
+			(title, type, short_description, description, creator, approver, private, executors_group, teaching_materials, join_date, realization_dates, rule_id, organization_id)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 			RETURNING id;
 		`, [
 			payload.title,
@@ -71,7 +73,8 @@ export async function createTheme(payload: createThemePayload) {
 			payload.teachingMaterials ? JSON.stringify(payload.teachingMaterials) : null,
 			payload.joinDate,
 			JSON.stringify(payload.realizationDates),
-			payload.ruleId
+			payload.ruleId,
+			payload.orgId
 		]);
 		if (rows.length !== 1) {
 			return null;
@@ -118,6 +121,7 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 		teachingMaterials: themeRows[0].teaching_materials,
 		joinDate: themeRows[0].join_date,
 		realizationDates: themeRows[0].realization_dates,
+		organizationId: themeRows[0].organization_id,
 		creator,
 		approver,
 		executorsGroup,
@@ -126,17 +130,29 @@ export async function getTheme(themeId: number): Promise<Theme | null> {
 	};
 }
 
-export async function getAllRecruitingThemes(filters?: Filters, orderBy?: OrderBy): Promise<number[]> {
+export async function getAllRecruitingThemes(orgId: number, filters?: Filters, orderBy?: OrderBy, search?: string): Promise<number[]> {
 	let slotsCount = 1;
 	const defaultQuery = `--sql
 		SELECT t.id FROM themes as t
 		LEFT JOIN groups AS g
 		ON t.executors_group = g.id
 		WHERE status = 'recruiting' AND approver IS NOT NULL
-		AND g.size - (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) >= $1
+		AND (
+			CASE 
+				WHEN private = true THEN t.organization_id = $1
+				ELSE true
+			END
+		)
+		AND g.size - (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) >= $2
 	`
 
 	const query = [defaultQuery];
+
+	if (search) {
+		query.push(`
+			AND LOWER(title) LIKE '%${search}%'
+		`);
+	}
 
 	for (const [key, value] of Object.entries(filters ?? {})) {
 		if (key === 'slotsCount') {
@@ -146,6 +162,10 @@ export async function getAllRecruitingThemes(filters?: Filters, orderBy?: OrderB
 			continue;
 		}
 		let val;
+
+		if (key === 'private' && value === false) {
+			val = null;
+		}
 
 		if(value) {
 			val = `'${value}'`
@@ -167,7 +187,7 @@ export async function getAllRecruitingThemes(filters?: Filters, orderBy?: OrderB
 		query.push(`ORDER BY ${orderBy.field} ${orderBy.order}`)
 	}
 
-	const {rows} = await dbClient.query<{id: number}>(query.join('\n'), [slotsCount]);
+	const {rows} = await dbClient.query<{id: number}>(query.join('\n'), [orgId, slotsCount]);
 
 	return rows.map((row) => row.id);
 }
@@ -289,9 +309,9 @@ export async function getOrderData(ruleId: number) {
 			}
 
 			orderData[group].push({
-				executorName: executor.name + ' ' + executor.surname,
+				executorName: executor.name + ' ' + executor.surname + ' ' + executor.patronymic,
 				head: {
-					name: head.name + ' ' + head.surname,
+					name: head.name + ' ' + head.surname + ' ' + head.patronymic,
 					post: head.post ?? ''
 				},
 				themeTitle: theme.title
@@ -300,4 +320,55 @@ export async function getOrderData(ruleId: number) {
 	}
 
 	return orderData;
+}
+
+export async function updateStatus(themeId: number, newStatus: ThemeStatus) {
+	const query = `--sql
+		UPDATE themes
+		SET status = $1
+		WHERE id = $2;
+	`;
+
+	try {
+		await dbClient.query(query, [newStatus, themeId]);
+	} catch (error){
+		logger.error(error)
+		return false;
+	}
+
+	return true;
+}
+
+export async function getThemeByGroup(groupId: number) {
+	const query = `--sql
+		SELECT id FROM themes
+		WHERE executors_group = $1;
+	`
+
+	const {rows} = await dbClient.query<{id: number}>(query, [groupId]);
+
+	const themeId = rows[0].id;
+
+	const theme = await getTheme(themeId);
+
+	return theme;
+}
+
+export async function getThemesToSync() {
+	const query = `--sql
+		SELECT id FROM themes
+		WHERE status NOT IN ('recruiting', 'completed');
+	`
+
+	const {rows} = await dbClient.query<{id: number}>(query);
+
+	if (!rows.length) {
+		return [];
+	}
+
+	const themes = await Promise.all(rows.map((row) => dbClient.query<ThemeDbEntry>(`
+		SELECT * FROM themes WHERE id = ${row.id};
+	`)));
+
+	return themes.map((theme) => theme.rows[0]);
 }

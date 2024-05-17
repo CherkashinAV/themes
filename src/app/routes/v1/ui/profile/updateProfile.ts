@@ -6,7 +6,8 @@ import {formatZodError} from '../../validators';
 import {checkUserIsExist, createUserRecord, updateProfile} from '../../../../storage/user';
 
 const bodySchema = z.object({
-    description: z.string()
+    description: z.string(),
+    skills: z.array(z.string())
 });
 
 export const updateProfileHandler = asyncMiddleware(async (req: Request, res: Response) => {
@@ -18,7 +19,7 @@ export const updateProfileHandler = asyncMiddleware(async (req: Request, res: Re
 
     const body = validationResult.data;
 
-    const updateResult = await updateProfile(req.currentUser.uid, {description: body.description});
+    const updateResult = await updateProfile(req.currentUser.uid, {description: body.description, skills: body.skills});
 
 	if (!updateResult) {
 		throw new Error('Update profile failed');

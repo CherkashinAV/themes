@@ -11,7 +11,9 @@ const querySchema = z.object({
 	private: z.string().optional(),
 	slotsCount: z.string().optional(),
 	type: z.string().optional(),
+	search: z.string().optional(),
 	field: z.string().optional(),
+	orgId: z.string(),
 	order: z.union([
 		z.literal('asc'),
 		z.literal('desc')
@@ -42,7 +44,7 @@ export const allThemesHandler = asyncMiddleware(async (req: Request, res: Respon
 	if(query.userId) {
 		themes = await getAllThemesForUser(req.currentUser.uid, filters, orderBy);
 	} else {
-		themes = await getAllRecruitingThemes(filters, orderBy);
+		themes = await getAllRecruitingThemes(parseInt(query.orgId, 10), filters, orderBy, query.search);
 	}
 
     res.status(200).json(themes);

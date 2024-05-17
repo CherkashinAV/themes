@@ -1,23 +1,29 @@
 import asyncMiddleware from 'middleware-async';
 import {Request, Response} from 'express';
-import {notificationLook} from '../../../../storage/notifications';
 import z from 'zod';
 import {ApiError} from '../../api-error';
 import {formatZodError} from '../../validators';
 import {passportProvider} from '../../../../providers/passport';
 import {createUserRecord, getUserDetails} from '../../../../storage/user';
-import {logger} from '../../../../lib/logger';
 
 const bodySchema = z.object({
 	email: z.string().email(),
     name: z.string(),
     surname: z.string(),
+	patronymic: z.string(),
+	post: z.string().optional().nullable(),
+	groupName: z.string().optional().nullable(),
     role: z.union([
 		z.literal('default'),
 		z.literal('mentor'),
 		z.literal('moderator')
 	]),
-    linkToRegisterForm: z.string().url()
+    linkToRegisterForm: z.string().url(),
+	senderOptions: z.object({
+        email: z.string().email(),
+        emailSecret: z.string(),
+        templateUid: z.string().uuid()
+    })
 });
 
 export const inviteHandler = asyncMiddleware(async (req: Request, res: Response) => {
@@ -29,22 +35,29 @@ export const inviteHandler = asyncMiddleware(async (req: Request, res: Response)
 
     const body = validationResult.data;
 
+	console.log(JSON.stringify(body))
+
+	const moderDetails = await getUserDetails(req.currentUser.uid);
+
+	if (!moderDetails) {
+		throw new Error('Failed to get organization');
+	}
+
 	const data = await passportProvider.registrationInvite({
 		...body,
-		accessToken: req.headers.authorization ? req.headers.authorization.split(' ')[1] : ''
+		accessToken: req.headers.authorization ? req.headers.authorization.split(' ')[1] : '',
+		organizationName: moderDetails.organization.shortName
 	})
 
 	if (!data.ok) {
 		throw new Error('Failed to create passport');
 	}
 
-	const mentorDetails = await getUserDetails(req.currentUser.uid);
-
-	if (!mentorDetails) {
-		throw new Error('Failed to get organization');
-	}
-
-	const userRecordResult = await createUserRecord(data.value.uid, mentorDetails.organization.id);
+	const userRecordResult = await createUserRecord(data.value.uid, {
+		groupName: body.groupName ?? null,
+		organizationId: moderDetails.organization.id,
+		post: body.post ?? null
+	});
 
 	if (!userRecordResult) {
 		throw new Error('Failed to create user record');

@@ -55,7 +55,8 @@ export const createThemeHandler = asyncMiddleware(async (req: Request, res: Resp
 		type: body.type,
 		joinDate: body.joinDate,
 		realizationDates: body.realizationDates,
-		ruleId: body.ruleId
+		ruleId: body.ruleId,
+		orgId: creator.organization.id
 	});
 
 	if (creator.role === 'default') {

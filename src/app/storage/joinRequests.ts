@@ -1,6 +1,6 @@
 import {getUserInfo} from '../integration/user';
 import {dbClient} from '../lib/db-client';
-import {UserWithDetails} from '../types';
+import {ThemeType, UserWithDetails} from '../types';
 
 export async function getJoinRequests(groupId: number): Promise<{user: UserWithDetails, requestDateTime: string}[]> {
 	const {rows: requestsRows} = await dbClient.query<{user_id: number, created_at: string}>(`--sql
@@ -41,6 +41,28 @@ export async function deleteJoinRequest(groupId: number, userId: number): Promis
 				group_id = $1 AND
 				user_id = $2
 		`, [groupId, userId]);
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export async function deleteExcessRequests(type: ThemeType, userId: number) {
+	const {rows: typedGroups} = await dbClient.query<{executors_group: number}>(`--sql
+		SELECT executors_group FROM themes JOIN groups ON themes.executors_group = groups.id
+		WHERE type = $1;
+	`, [type]);
+
+	const groups = typedGroups.map((gr) => gr.executors_group);
+
+	try {
+		await dbClient.query(`--sql
+			DELETE FROM join_requests
+			WHERE 
+				group_id = ANY($1) AND
+				user_id = $2
+		`, [groups, userId]);
 
 		return true;
 	} catch {

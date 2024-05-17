@@ -8,12 +8,13 @@ export type UserDetailsDbEntry = {
 	organization: number;
 	group_name: string | null;
 	post: string | null;
+	skills: string[];
 }
 
 export async function getUserDetails(userId: string): Promise<UserDetails | null> {
 	const client = await dbClient.connect()
 	const {rows: userRows} = await client.query<UserDetailsDbEntry>(`--sql
-		SELECT id, description, organization, group_name, post FROM users
+		SELECT id, description, organization, group_name, post, skills FROM users
 		WHERE uid =  $1;
 	`,
 		[userId]
@@ -48,21 +49,22 @@ export async function getUserDetails(userId: string): Promise<UserDetails | null
 			attributes: organizationRows[0].attributes
 		},
 		group: userRows[0].group_name,
-		post: userRows[0].post
+		post: userRows[0].post,
+		skills: userRows[0].skills
 	}
 
     return userDetails;
 }
 
-export async function updateProfile(userId: string, updateFields: {description: string}) {
+export async function updateProfile(userId: string, updateFields: {description: string, skills: string[]}) {
 	const query = `--sql
 		UPDATE users
-		SET description = $1
-		WHERE uid = $2;
+		SET description = $1, skills = $2
+		WHERE uid = $3;
 	`;
 
 	try {
-		await dbClient.query(query, [updateFields.description, userId]);
+		await dbClient.query(query, [updateFields.description, JSON.stringify(updateFields.skills), userId]);
 	} catch {
 		return false;
 	}
@@ -82,14 +84,21 @@ export async function checkUserIsExist(userId: string) {
 	return true;
 } 
 
-export async function createUserRecord(userId: string, organizationId?: number) {
-	const query = organizationId ?
-		`INSERT INTO users (uid, organization) VALUES ('${userId}', ${organizationId});`
+export async function createUserRecord(userId: string, orgData?: {
+	post: string | null,
+	groupName: string | null,
+	organizationId: number
+}) {
+	const query = orgData ?
+		`INSERT INTO users (uid, organization, post, group_name)
+		VALUES ('${userId}', ${orgData.organizationId}, $1, $2);`
 		:
 		`INSERT INTO users (uid) VALUES ('${userId}');`
 
 	try {
-		await dbClient.query(query);
+		orgData ?
+			await dbClient.query(query, [orgData.post, orgData.groupName]) :
+			await dbClient.query(query);
 	} catch (error) {
 		return false;
 	}

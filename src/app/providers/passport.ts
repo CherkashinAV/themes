@@ -10,6 +10,12 @@ export type RegistrationInvitePayload = {
 	role: Role;
 	linkToRegisterForm: string;
 	accessToken: string;
+	organizationName: string;
+	senderOptions: {
+        email: string;
+        emailSecret: string;
+        templateUid: string;
+    }
 };
 
 const passportHttpClient = httpClient;

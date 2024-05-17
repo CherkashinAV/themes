@@ -27,7 +27,7 @@ const prodConfig: Config = {
     'db.user': process.env.DB_USER!,
     'db.host': 'localhost', // TODO
     'db.password': process.env.DB_PASS!,
-    'passport.baseUrl': 'localHost' // TODO
+    'passport.baseUrl': 'localhost' // TODO
 };
 
 const testConfig: Config = {

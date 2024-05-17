@@ -4,6 +4,7 @@ import {v1Router} from './routes/v1';
 import {env, config} from './config';
 import {logger} from './lib/logger';
 import {User} from './types';
+import {syncStatusesCron} from './jobs/sync-statuses';
 
 declare global {
     namespace Express {
@@ -33,6 +34,7 @@ export function runApp(): void {
     const app = createApp();
     app.listen(port, () => {
         logger.info(`Server started on port ${port} (${env})`);
+        syncStatusesCron.start();
     });
 }
 

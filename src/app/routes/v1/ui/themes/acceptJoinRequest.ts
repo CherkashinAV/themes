@@ -4,8 +4,9 @@ import {ApiError} from '../../api-error';
 import {Request, Response} from 'express';
 import {formatZodError} from '../../validators';
 import {getUserIdByUid} from '../../../../storage/user';
-import {deleteJoinRequest} from '../../../../storage/joinRequests';
-import {joinGroup} from '../../../../storage/group';
+import {deleteExcessRequests, deleteJoinRequest} from '../../../../storage/joinRequests';
+import {getGroup, joinGroup} from '../../../../storage/group';
+import {getThemeByGroup, updateStatus} from '../../../../storage/themes';
 
 const bodySchema = z.object({
 	groupId: z.number(),
@@ -37,6 +38,29 @@ export const acceptJoinRequestHandler = asyncMiddleware(async (req: Request, res
 
 	if (!joinResult) {
 		throw new Error('Failed to join group');
+	}
+
+	const group = await getGroup(body.groupId);
+
+	if (!group) {
+		throw new Error('Failed to get a group');
+	}
+	
+	const theme = await getThemeByGroup(group.id);
+
+	if (!theme) {
+		throw new Error('Failed to get theme');
+	}
+	if (group.size === group.participants.length) {
+		updateStatus(theme.id, 'staffed');
+	}
+
+	if (theme.type === 'graduation') {
+		const result = await deleteExcessRequests('graduation', userId);
+
+		if (!result) {
+			throw new Error('Failed delete excess requests');
+		}
 	}
 
     res.status(200).json({status: 'OK'});

@@ -15,6 +15,7 @@ export type Role = 'default' | 'mentor' | 'moderator';
 export type User = {
 	name: string;
 	surname: string;
+	patronymic?: string | null;
 	email: string;
 	role: Role;
 	uid: string;
@@ -37,6 +38,7 @@ export type UserDetails = {
 	organization: Organization;
 	post: string | null;
 	group: string | null;
+	skills: string[];
 }
 
 export type UserWithDetails = User & UserDetails;
@@ -73,6 +75,7 @@ export type Theme = {
 	creator: UserWithDetails;
 	private: boolean;
 	executorsGroup: Group;
+	organizationId: number;
 	teachingMaterials: TeachingMaterial[] | null;
 	joinDate: string;
 	realizationDates: DateInterval,
